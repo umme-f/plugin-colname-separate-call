@@ -44,3 +44,4 @@ class AttributeDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         self.comboBox = self.findChild(QtWidgets.QComboBox, 'comboBox')
         self.comboBox2 = self.findChild(QtWidgets.QComboBox, 'comboBox_2')
+        # self.lineEdit = self.findChild(QtWidgets.QLineEdit, 'lineEdit')

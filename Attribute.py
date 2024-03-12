@@ -23,10 +23,9 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.core import QgsProject
-from qgis.core import QgsLayerTreeLayer  
-from qgis.core import QgsMapLayerType  
+from qgis.core import QgsLayerTreeLayer, QgsMapLayerType   
 from qgis.core import QgsExpression, QgsFeatureRequest,QgsFeatureIterator
 
 
@@ -168,7 +167,7 @@ class Attribute:
         icon_path = ':/plugins/Attribute/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u''),
+            text=self.tr(u'AttributeFinder'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -185,18 +184,77 @@ class Attribute:
             self.iface.removeToolBarIcon(action)
 
 
+    def check_lineedit_text(self):
+    # Get the text from the QLineEdit
+        lineedit_text = self.dlg.lineEdit.text()
+
+    # Get the selected values from the ComboBoxes
+        selected_value1 = self.dlg.comboBox.currentText()
+        selected_value2 = self.dlg.comboBox2.currentText()
+
+    # Get the layer based on the attribute values for the first GeoPackage
+        layer1 = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2, "字界(玉名市).gpkg")
+
+    # Get the layer based on the attribute values for the second GeoPackage
+        layer2 = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2, "地籍(玉名市).gpkg")
+
+    # Check if either layer has the specified column
+        column_to_check = "地番"  # Replace with the actual column name
+
+        if not lineedit_text:
+        # Zoom based on dropdown values when the line edit is empty
+            if layer1:
+                self.zoom_to_features(layer1, "市町村名", selected_value1, "大字名", selected_value2)
+            elif layer2:
+                self.zoom_to_features(layer2, "市町村名", selected_value1, "大字名", selected_value2)
+        else:
+        # Check line edit box data with the specified column in the attribute table
+            if layer1 and column_to_check in layer1.fields().names():
+                self.check_and_zoom(layer1, column_to_check, lineedit_text, "市町村名", selected_value1, "大字名", selected_value2)
+            elif layer2 and column_to_check in layer2.fields().names():
+                self.check_and_zoom(layer2, column_to_check, lineedit_text, "市町村名", selected_value1, "大字名", selected_value2)
+            else:
+                self.show_message("Column {} does not exist in the attribute tables of both GeoPackages.".format(column_to_check))
+
+
+    def check_and_zoom(self, layer, column_to_check, lineedit_text, *args):
+        # Check line edit box data with the specified column in the attribute table
+        if self.check_lineedit_data(layer, column_to_check, lineedit_text):
+            # Zoom based on line edit box data and both dropdown values
+            self.zoom_to_features(layer, column_to_check, lineedit_text, *args)
+        else:
+            # Handle the case where the line edit box data does not match the specified column
+            self.show_message("Line edit box data does not match the specified column.")        
+
+    def show_message(self, message):
+        # Display a message using QMessageBox
+        msg_box = QMessageBox()
+        msg_box.setText(message)
+        msg_box.exec_()
+
+    def check_lineedit_data(self, layer, column_to_check, lineedit_text):
+        # Check if line edit box data matches a certain column in the attribute table
+        if column_to_check in layer.fields().names():
+            expr = QgsExpression("{} = '{}'".format(column_to_check, lineedit_text))
+            request = QgsFeatureRequest(expr)
+            features = layer.getFeatures(request)
+            return any(features)
+        else:
+            self.show_message("Column {} does not exist in the layer's attribute table.".format(column_to_check))
+            return False
+
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
-            self.first_start = False
+            self.first_start == False
             self.dlg = AttributeDialog()
 
         # To zoom to the selected position click search
-        self.dlg.pushButton.clicked.connect(self.zoom_to_location)
-
+        self.dlg.pushButton.clicked.connect(self.check_lineedit_text)
+        
         # Get the root of the layer tree
         root = QgsProject.instance().layerTreeRoot()
 
@@ -239,31 +297,38 @@ class Attribute:
             pass
 
     def zoom_to_location(self):
+        lineedit_text = self.dlg.lineEdit.text()
         selected_value1 = self.dlg.comboBox.currentText()
         selected_value2 = self.dlg.comboBox2.currentText()
 
-        layer = self.get_layer_by_attribute_values("市町村名", selected_value1,"大字名", selected_value2)
+        layer = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2)
 
         if layer:
-            self.zoom_to_features(layer, "市町村名", selected_value1,"大字名", selected_value2)
+            self.check_lineedit_text(layer, lineedit_text, selected_value1, selected_value2)
 
-# Get the layers
-    def get_layer_by_attribute_values(self, column_name1, value1, column_name2, value2):
-        root=QgsProject.instance().layerTreeRoot()
+    # Get the layers
+    def get_layer_by_attribute_values(self, column_name1, value1, column_name2, value2, gpkg_filename):
+        root = QgsProject.instance().layerTreeRoot()
+
         for layer_tree in root.children():
-            if isinstance(layer_tree,QgsLayerTreeLayer):
+            if isinstance(layer_tree, QgsLayerTreeLayer):
                 layer = layer_tree.layer()
+
                 if layer:
-                    expr = QgsExpression("{} = '{}' AND {} = '{}'".format(column_name1, value1, column_name2, value2))
-                    request = QgsFeatureRequest(expr)
-                    features = layer.getFeatures(request)
-                    if features:
-                        return layer
+                    if layer.dataProvider().dataSourceUri().find(gpkg_filename) != -1:
+                        expr = QgsExpression("{} = '{}' AND {} = '{}'".format(column_name1, value1, column_name2, value2))
+                        request = QgsFeatureRequest(expr)
+                        features = layer.getFeatures(request)
+
+                        if features:
+                            return layer
+
         return None
 
-    def zoom_to_features(self, layer, column_name1, value1, column_name2, value2):
-    # Zoom to the features with the selected attribute values
-        expr = QgsExpression("{} = '{}' AND {} = '{}'".format(column_name1, value1, column_name2, value2))
+    # Zoom to the selected layer
+    def zoom_to_features(self, layer, *args):
+        # Zoom to the features with the selected attribute values
+        expr = QgsExpression(" AND ".join("{} = '{}'".format(column, value) for column, value in zip(args[::2], args[1::2])))
         request = QgsFeatureRequest(expr)
         features = layer.getFeatures(request)
         for feature in features:
