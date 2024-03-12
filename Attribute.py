@@ -185,6 +185,9 @@ class Attribute:
     def clear_lineEdit(self):
         self.dlg.lineEdit.clear()
 
+    def clicked_questionMark(self):
+        QMessageBox.information(None,'','地番は全て半角で入力してください。',QMessageBox.Yes)
+
     def check_lineedit_text(self):
     # Get the text from the QLineEdit
         lineedit_text = self.dlg.lineEdit.text()
@@ -258,6 +261,7 @@ class Attribute:
         self.dlg.pushButton.clicked.connect(self.check_lineedit_text)
         # To clear entry from lineEdit
         self.dlg.pushButton_2.clicked.connect(self.clear_lineEdit)
+        self.dlg.pushButton_3.clicked.connect(self.clicked_questionMark)
 
         # Get the root of the layer tree
         root = QgsProject.instance().layerTreeRoot()
