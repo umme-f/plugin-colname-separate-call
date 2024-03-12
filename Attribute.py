@@ -25,6 +25,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import QgsProject
+from qgis.core import QgsLayerTreeLayer  
+from qgis.core import QgsMapLayerType  
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -193,7 +195,22 @@ class Attribute:
         root  = QgsProject.instance().layerTreeRoot()
         layers= root.children()
         self.dlg.comboBox.clear()
-        self.dlg.comboBox.addItems([layer.name()for layer in layers])
+        attribute_column_name = '市町村名'
+
+        # Populate the ComboBox with data from the specified column
+        for layer_tree_layer in layers:
+            if isinstance(layer_tree_layer, QgsLayerTreeLayer):
+                layer = layer_tree_layer.layer()
+
+                # Ensure that the layer is a vector layer
+                if layer and layer.type() == QgsMapLayerType.VectorLayer:
+                    field_index = layer.fields().indexFromName(attribute_column_name)
+
+                    # Access attribute data from the specified column
+                    unique_values = set(feature.attributes()[field_index] for feature in layer.getFeatures())
+
+                    # Add the unique values to the ComboBox
+                    self.dlg.comboBox.addItems(sorted(unique_values))  # Sorting for better readability
 
         # show the dialog
         self.dlg.show()
@@ -203,4 +220,5 @@ class Attribute:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            pass
+            self.dlg.comboBox.currentText()
+
