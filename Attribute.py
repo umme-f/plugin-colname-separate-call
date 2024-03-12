@@ -165,15 +165,16 @@ class Attribute:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ':/plugins/Attribute/icon.png'
+        self.dlg = AttributeDialog()
+        self.dlg.pushButton_2.clicked.connect(self.clear_lineEdit)
+
         self.add_action(
             icon_path,
             text=self.tr(u'AttributeFinder'),
             callback=self.run,
-            parent=self.iface.mainWindow())
-
+            parent=self.iface.mainWindow())            
         # will be set False in run()
         self.first_start = True
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -183,6 +184,8 @@ class Attribute:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def clear_lineEdit(self):
+        self.dlg.lineEdit.clear()
 
     def check_lineedit_text(self):
     # Get the text from the QLineEdit
@@ -250,7 +253,7 @@ class Attribute:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start == False
-            self.dlg = AttributeDialog()
+            
 
         # To zoom to the selected position click search
         self.dlg.pushButton.clicked.connect(self.check_lineedit_text)
