@@ -192,33 +192,45 @@ class Attribute:
             self.first_start = False
             self.dlg = AttributeDialog()
 
-        root  = QgsProject.instance().layerTreeRoot()
-        layers= root.children()
-        self.dlg.comboBox.clear()
-        attribute_column_name = '市町村名'
+        # Get the root of the layer tree
+        root = QgsProject.instance().layerTreeRoot()
 
-        # Populate the ComboBox with data from the specified column
+        # Get a list of all layers in the project
+        layers = root.children()
+
+        # Clear the existing items in the ComboBoxes
+        self.dlg.comboBox.clear()
+        self.dlg.comboBox2.clear()
+
+        # Column names
+        column_name1 = '市町村名'
+        column_name2 = '大字名'
+
+        # Populate the ComboBoxes with data from the specified columns
         for layer_tree_layer in layers:
             if isinstance(layer_tree_layer, QgsLayerTreeLayer):
                 layer = layer_tree_layer.layer()
 
                 # Ensure that the layer is a vector layer
                 if layer and layer.type() == QgsMapLayerType.VectorLayer:
-                    field_index = layer.fields().indexFromName(attribute_column_name)
+                    # Access attribute data from the specified columns
+                    unique_values1 = set(feature[column_name1] for feature in layer.getFeatures())
+                    unique_values2 = set(feature[column_name2] for feature in layer.getFeatures())
 
-                    # Access attribute data from the specified column
-                    unique_values = set(feature.attributes()[field_index] for feature in layer.getFeatures())
+                    # Add the unique values to the ComboBoxes
+                    self.dlg.comboBox.addItems(sorted(unique_values1))  # Sorting for better readability
+                    self.dlg.comboBox2.addItems(sorted(unique_values2))  # Sorting for better readability
 
-                    # Add the unique values to the ComboBox
-                    self.dlg.comboBox.addItems(sorted(unique_values))  # Sorting for better readability
-
-        # show the dialog
+        # Show the dialog
         self.dlg.show()
+
         # Run the dialog event loop
         result = self.dlg.exec_()
+
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             self.dlg.comboBox.currentText()
+            self.dlg.comboBox2.currentText()
 

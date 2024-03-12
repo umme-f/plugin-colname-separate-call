@@ -42,3 +42,5 @@ class AttributeDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.comboBox = self.findChild(QtWidgets.QComboBox, 'comboBox')
+        self.comboBox2 = self.findChild(QtWidgets.QComboBox, 'comboBox_2')
