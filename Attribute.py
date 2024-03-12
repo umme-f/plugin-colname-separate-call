@@ -27,6 +27,8 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.core import QgsProject
 from qgis.core import QgsLayerTreeLayer  
 from qgis.core import QgsMapLayerType  
+from qgis.core import QgsExpression, QgsFeatureRequest,QgsFeatureIterator
+
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -192,6 +194,9 @@ class Attribute:
             self.first_start = False
             self.dlg = AttributeDialog()
 
+        # To zoom to the selected position click search
+        self.dlg.pushButton.clicked.connect(self.zoom_to_location)
+
         # Get the root of the layer tree
         root = QgsProject.instance().layerTreeRoot()
 
@@ -231,6 +236,38 @@ class Attribute:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
-            self.dlg.comboBox.currentText()
-            self.dlg.comboBox2.currentText()
+            pass
 
+    def zoom_to_location(self):
+        selected_value1 = self.dlg.comboBox.currentText()
+        selected_value2 = self.dlg.comboBox2.currentText()
+
+        layer = self.get_layer_by_attribute_values("市町村名", selected_value1,"大字名", selected_value2)
+
+        if layer:
+            self.zoom_to_features(layer, "市町村名", selected_value1,"大字名", selected_value2)
+
+# Get the layers
+    def get_layer_by_attribute_values(self, column_name1, value1, column_name2, value2):
+        root=QgsProject.instance().layerTreeRoot()
+        for layer_tree in root.children():
+            if isinstance(layer_tree,QgsLayerTreeLayer):
+                layer = layer_tree.layer()
+                if layer:
+                    expr = QgsExpression("{} = '{}' AND {} = '{}'".format(column_name1, value1, column_name2, value2))
+                    request = QgsFeatureRequest(expr)
+                    features = layer.getFeatures(request)
+                    if features:
+                        return layer
+        return None
+
+    def zoom_to_features(self, layer, column_name1, value1, column_name2, value2):
+    # Zoom to the features with the selected attribute values
+        expr = QgsExpression("{} = '{}' AND {} = '{}'".format(column_name1, value1, column_name2, value2))
+        request = QgsFeatureRequest(expr)
+        features = layer.getFeatures(request)
+        for feature in features:
+            bbox = feature.geometry().boundingBox()
+            self.iface.mapCanvas().setExtent(bbox)
+            self.iface.mapCanvas().refresh()
+            break
