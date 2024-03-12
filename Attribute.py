@@ -165,8 +165,6 @@ class Attribute:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ':/plugins/Attribute/icon.png'
-        self.dlg = AttributeDialog()
-        self.dlg.pushButton_2.clicked.connect(self.clear_lineEdit)
 
         self.add_action(
             icon_path,
@@ -253,11 +251,14 @@ class Attribute:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start == False
-            
+            self.dlg = AttributeDialog()
+
 
         # To zoom to the selected position click search
         self.dlg.pushButton.clicked.connect(self.check_lineedit_text)
-        
+        # To clear entry from lineEdit
+        self.dlg.pushButton_2.clicked.connect(self.clear_lineEdit)
+
         # Get the root of the layer tree
         root = QgsProject.instance().layerTreeRoot()
 
