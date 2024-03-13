@@ -29,7 +29,7 @@ from qgis.core import QgsLayerTreeLayer, QgsMapLayerType
 from qgis.core import QgsExpression, QgsFeatureRequest
 
 # From config.py import column names
-from .config import COLUMN_NAME_1, COLUMN_NAME_2, COLUMN_NAME_3
+from .config import COLUMN_NAME_1, COLUMN_NAME_2, COLUMN_NAME_3, LAYER_NAME_1,LAYER_NAME_2
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -71,7 +71,7 @@ class Attribute:
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
-        self.first_start = None
+        self.first_start = True
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -199,10 +199,10 @@ class Attribute:
         selected_value2 = self.dlg.comboBox2.currentText()
 
     # Get the layer based on the attribute values for the first GeoPackage
-        layer1 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, "字界(玉名市).gpkg")
+        layer1 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, LAYER_NAME_1)
 
     # Get the layer based on the attribute values for the second GeoPackage
-        layer2 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, "地籍(玉名市).gpkg")
+        layer2 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, LAYER_NAME_2)
 
     # Check if either layer has the specified column
         column_to_check = COLUMN_NAME_3  # Replace with the actual column name
@@ -255,7 +255,7 @@ class Attribute:
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
-            self.first_start == False
+            self.first_start = False
             self.dlg = AttributeDialog()
 
 
@@ -275,7 +275,6 @@ class Attribute:
         self.dlg.comboBox.clear()
         self.dlg.comboBox2.clear()
 
-        # Column names
         # column_name1 = '市町村名'
         # column_name2 = '大字名'
 
