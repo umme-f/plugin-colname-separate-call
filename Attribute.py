@@ -9,7 +9,7 @@
         begin                : 2024-03-12
         git sha              : $Format:%H$
         copyright            : (C) 2024 by ksc
-        email                : ---
+        email                : umme@ariake-s.co.jp
  ***************************************************************************/
 
 /***************************************************************************
@@ -26,8 +26,10 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMessageBox
 from qgis.core import QgsProject
 from qgis.core import QgsLayerTreeLayer, QgsMapLayerType   
-from qgis.core import QgsExpression, QgsFeatureRequest,QgsFeatureIterator
+from qgis.core import QgsExpression, QgsFeatureRequest
 
+# From config.py import column names
+from .config import COLUMN_NAME_1, COLUMN_NAME_2, COLUMN_NAME_3
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -65,7 +67,7 @@ class Attribute:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Attributefinder')
+        self.menu = self.tr(u'&Attribute Finder')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -168,7 +170,7 @@ class Attribute:
 
         self.add_action(
             icon_path,
-            text=self.tr(u'AttributeFinder'),
+            text=self.tr(u'Attribute Finder'),
             callback=self.run,
             parent=self.iface.mainWindow())            
         # will be set False in run()
@@ -178,7 +180,7 @@ class Attribute:
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
-                self.tr(u'&Attributefinder'),
+                self.tr(u'&Attribute Finder'),
                 action)
             self.iface.removeToolBarIcon(action)
 
@@ -197,26 +199,26 @@ class Attribute:
         selected_value2 = self.dlg.comboBox2.currentText()
 
     # Get the layer based on the attribute values for the first GeoPackage
-        layer1 = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2, "字界(玉名市).gpkg")
+        layer1 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, "字界(玉名市).gpkg")
 
     # Get the layer based on the attribute values for the second GeoPackage
-        layer2 = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2, "地籍(玉名市).gpkg")
+        layer2 = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2, "地籍(玉名市).gpkg")
 
     # Check if either layer has the specified column
-        column_to_check = "地番"  # Replace with the actual column name
+        column_to_check = COLUMN_NAME_3  # Replace with the actual column name
 
         if not lineedit_text:
         # Zoom based on dropdown values when the line edit is empty
             if layer1:
-                self.zoom_to_features(layer1, "市町村名", selected_value1, "大字名", selected_value2)
+                self.zoom_to_features(layer1, COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2)
             elif layer2:
-                self.zoom_to_features(layer2, "市町村名", selected_value1, "大字名", selected_value2)
+                self.zoom_to_features(layer2, COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2)
         else:
         # Check line edit box data with the specified column in the attribute table
             if layer1 and column_to_check in layer1.fields().names():
-                self.check_and_zoom(layer1, column_to_check, lineedit_text, "市町村名", selected_value1, "大字名", selected_value2)
+                self.check_and_zoom(layer1, column_to_check, lineedit_text, COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2)
             elif layer2 and column_to_check in layer2.fields().names():
-                self.check_and_zoom(layer2, column_to_check, lineedit_text, "市町村名", selected_value1, "大字名", selected_value2)
+                self.check_and_zoom(layer2, column_to_check, lineedit_text, COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2)
             else:
                 self.show_message("Column {} does not exist in the attribute tables of both GeoPackages.".format(column_to_check))
 
@@ -274,8 +276,8 @@ class Attribute:
         self.dlg.comboBox2.clear()
 
         # Column names
-        column_name1 = '市町村名'
-        column_name2 = '大字名'
+        # column_name1 = '市町村名'
+        # column_name2 = '大字名'
 
         # Populate the ComboBoxes with data from the specified columns
         for layer_tree_layer in layers:
@@ -285,8 +287,8 @@ class Attribute:
                 # Ensure that the layer is a vector layer
                 if layer and layer.type() == QgsMapLayerType.VectorLayer:
                     # Access attribute data from the specified columns
-                    unique_values1 = set(feature[column_name1] for feature in layer.getFeatures())
-                    unique_values2 = set(feature[column_name2] for feature in layer.getFeatures())
+                    unique_values1 = set(feature[COLUMN_NAME_1] for feature in layer.getFeatures())
+                    unique_values2 = set(feature[COLUMN_NAME_2] for feature in layer.getFeatures())
 
                     # Add the unique values to the ComboBoxes
                     self.dlg.comboBox.addItems(sorted(unique_values1))  # Sorting for better readability
@@ -309,7 +311,7 @@ class Attribute:
         selected_value1 = self.dlg.comboBox.currentText()
         selected_value2 = self.dlg.comboBox2.currentText()
 
-        layer = self.get_layer_by_attribute_values("市町村名", selected_value1, "大字名", selected_value2)
+        layer = self.get_layer_by_attribute_values(COLUMN_NAME_1, selected_value1, COLUMN_NAME_2, selected_value2)
 
         if layer:
             self.check_lineedit_text(layer, lineedit_text, selected_value1, selected_value2)

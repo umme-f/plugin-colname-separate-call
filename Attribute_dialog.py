@@ -9,7 +9,7 @@
         begin                : 2024-03-12
         git sha              : $Format:%H$
         copyright            : (C) 2024 by ksc
-        email                : ---
+        email                : umme@ariake-s.co.jp
  ***************************************************************************/
 
 /***************************************************************************
@@ -42,5 +42,4 @@ class AttributeDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
-        self.comboBox = self.findChild(QtWidgets.QComboBox, 'comboBox')
         self.comboBox2 = self.findChild(QtWidgets.QComboBox, 'comboBox_2')
